@@ -6,7 +6,7 @@
 /*   By: apierret <apierret@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 17:04:23 by apierret          #+#    #+#             */
-/*   Updated: 2024/11/13 18:51:39 by apierret         ###   ########.fr       */
+/*   Updated: 2024/11/13 19:58:48 by apierret         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,10 +101,10 @@ int	main(int argc, char **argv, char **envp)
 		return (close(input_fd), 1);
 	if (pipe(pipe_fds) == -1)
 		return (close(input_fd), close(output_fd), 1);
-	exec_command("grep NA", input_fd, pipe_fds[1], envp);
+	exec_command(argv[2], input_fd, pipe_fds[1], envp);
 	close(pipe_fds[1]);
 	close(input_fd);
-	exec_command("wc -l", pipe_fds[0], output_fd, envp);
+	exec_command(argv[3], pipe_fds[0], output_fd, envp);
 	close(pipe_fds[0]);
 	close(output_fd);
 	return (0);
