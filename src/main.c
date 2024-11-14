@@ -6,7 +6,7 @@
 /*   By: apierret <apierret@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 17:04:23 by apierret          #+#    #+#             */
-/*   Updated: 2024/11/13 19:58:48 by apierret         ###   ########.fr       */
+/*   Updated: 2024/11/14 13:58:34 by apierret         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,9 +64,11 @@ static int	exec_command(char *cmd, int input, int output, char **envp)
 	pid_t	pid;
 	char	**args;
 	char	*fcmd;
+	int		status;
 
 	args = ft_split(cmd, ' ');
 	fcmd = locate_command(args[0], envp);
+	status = 0;
 	pid = fork();
 	if (pid == -1)
 		return (0);
@@ -75,12 +77,13 @@ static int	exec_command(char *cmd, int input, int output, char **envp)
 		dup2(input, STDIN_FILENO);
 		dup2(output, STDOUT_FILENO);
 		execve(fcmd, args, envp);
+		exit(EXIT_FAILURE);
 	}
 	else
-		wait(NULL);
+		waitpid(pid, &status, 0);
 	free(fcmd);
 	free_strings(args);
-	return (1);
+	return (status == 0);
 }
 
 int	main(int argc, char **argv, char **envp)
@@ -95,17 +98,17 @@ int	main(int argc, char **argv, char **envp)
 		return (ft_putstr_fd("[PIPEX] Too much arguments.\n", 2), 1);
 	input_fd = open(argv[1], O_RDONLY);
 	if (input_fd == -1)
-		return (1);
-	output_fd = open(argv[4], O_WRONLY | O_TRUNC | O_CREAT, 0644);
-	if (output_fd == -1)
-		return (close(input_fd), 1);
+		return (perror(argv[1]), 1);
 	if (pipe(pipe_fds) == -1)
-		return (close(input_fd), close(output_fd), 1);
-	exec_command(argv[2], input_fd, pipe_fds[1], envp);
+		return (perror("pipex"), close(input_fd), 1);
+	if (exec_command(argv[2], input_fd, pipe_fds[1], envp) == 0)
+		return (ft_putstr_fd(argv[2], 2), ft_putstr_fd(": command not found\n", 2), close(input_fd), close(pipe_fds[0]), close(pipe_fds[1]));
 	close(pipe_fds[1]);
 	close(input_fd);
-	exec_command(argv[3], pipe_fds[0], output_fd, envp);
-	close(pipe_fds[0]);
-	close(output_fd);
-	return (0);
+	output_fd = open(argv[4], O_WRONLY | O_TRUNC | O_CREAT, 0644);
+	if (output_fd == -1)
+		return (perror(argv[4]), close(pipe_fds[0]), 1);
+	if (exec_command(argv[3], pipe_fds[0], output_fd, envp) == 0)
+		return (ft_putstr_fd(argv[3], 2), ft_putstr_fd(": command not found\n", 2), close(output_fd), close(pipe_fds[0]));
+	return (close(pipe_fds[0]), close(output_fd), 0);
 }
