@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -Werror -I$(LIBFT_DIR)
+CFLAGS=-Wall -Wextra -Werror -I$(LIBFT_DIR)/include
 LDFLAGS=-L$(LIBFT_DIR)
 LIBS=-lft
 SOURCES=src/main.c
