@@ -7,9 +7,17 @@ PIPEX="./pipex"
 INPUT="input.txt"
 EXPECTED="expected_output.txt"
 OUTPUT="output.txt"
+NO_READ_FILE="no_read_file.txt"
+NO_WRITE_FILE="no_write_file.txt"
+ANOTHER_NO_WRITE_FILE="another_no_write_file.txt"
 LOG="test_results.log"
 TEMP_SANITIZER_LOG="sanitizer_results.log"
+INPUT_BAK=$INPUT
+OUTPUT_BAK=$OUTPUT
 
+touch $NO_READ_FILE && chmod -r $NO_READ_FILE
+touch $NO_WRITE_FILE && chmod -w $NO_WRITE_FILE
+touch $ANOTHER_NO_WRITE_FILE && chmod -w $ANOTHER_NO_WRITE_FILE
 # Efface les résultats précédents
 echo "Résultats des tests pour Pipex" > $LOG
 
@@ -125,6 +133,16 @@ run_test "echo 'one line'" "cat" "echo 'one line' | cat" # Tester l'ordre d'exé
 # Tests de performance (grande taille de fichier)
 yes "Line of text" | head -n 1000 > $INPUT
 run_test "cat" "wc -l" "cat input.txt | wc -l"  # Compter les lignes d'un fichier avec 1000 lignes
+
+# Tests sur des cas critiques de fichiers
+INPUT=$NO_READ_FILE
+run_test "cat" "wc -l" "no read perm on the input file"
+INPUT="unknown.txt"
+run_test "cat" "wc -l" "unknown input file"
+INPUT=$INPUT_BAK
+OUTPUT=$NO_WRITE_FILE
+EXPECTED=$ANOTHER_NO_WRITE_FILE
+run_test "cat" "wc -l" "no write perm on the output file"
 
 # Affichage des résultats
 echo -e "\n======================== Résultats des tests ========================\n"
