@@ -6,7 +6,7 @@
 /*   By: apierret <apierret@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/16 11:20:01 by apierret          #+#    #+#             */
-/*   Updated: 2024/11/16 11:22:36 by apierret         ###   ########.fr       */
+/*   Updated: 2024/11/16 12:04:30 by apierret         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,5 +14,6 @@
 # define UTILS_H
 
 void	free_ddarray(char **arr);
+char	**ft_split_args(char *cmd);
 
 #endif

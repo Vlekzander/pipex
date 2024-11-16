@@ -6,13 +6,14 @@
 /*   By: apierret <apierret@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 17:04:23 by apierret          #+#    #+#             */
-/*   Updated: 2024/11/16 11:22:54 by apierret         ###   ########.fr       */
+/*   Updated: 2024/11/16 16:06:24 by apierret         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include "libft.h"
@@ -23,7 +24,7 @@ static char	*locate_command(char *cmd, char **envp)
 	char	*fcmd;
 	char	*temp;
 	char	**paths;
-	int		i;
+	size_t	i;
 
 	i = 0;
 	while (envp[i] != NULL && ft_strncmp("PATH=", envp[i], 5) != 0)
@@ -52,24 +53,25 @@ static int	exec_command(char *cmd, int input, int output, char **envp)
 	char	*fcmd;
 	int		status;
 
-	args = ft_split(cmd, ' ');
+	args = ft_split_args(cmd);
 	fcmd = locate_command(args[0], envp);
-	status = 0;
+	if (fcmd == NULL)
+		return (127);
 	pid = fork();
 	if (pid == -1)
-		return (0);
+		return (perror("fork"), 1);
 	if (pid == 0)
 	{
 		dup2(input, STDIN_FILENO);
 		dup2(output, STDOUT_FILENO);
 		execve(fcmd, args, envp);
-		exit(EXIT_FAILURE);
 	}
-	else
-		waitpid(pid, &status, 0);
+	waitpid(pid, &status, 0);
+	if (WIFEXITED(status))
+		status = WEXITSTATUS(status);
 	free(fcmd);
 	free_ddarray(args);
-	return (status == 0);
+	return (status);
 }
 
 int	main(int argc, char **argv, char **envp)
@@ -77,6 +79,7 @@ int	main(int argc, char **argv, char **envp)
 	int		pipe_fds[2];
 	int		input_fd;
 	int		output_fd;
+	int		result;
 
 	if (argc < 5)
 		return (ft_putstr_fd("[PIPEX] Not enough arguments.\n", 2), 1);
@@ -87,14 +90,18 @@ int	main(int argc, char **argv, char **envp)
 		return (perror(argv[1]), 1);
 	if (pipe(pipe_fds) == -1)
 		return (perror("pipex"), close(input_fd), 1);
-	if (exec_command(argv[2], input_fd, pipe_fds[1], envp) == 0)
-		return (ft_putstr_fd(argv[2], 2), ft_putstr_fd(": command not found\n", 2), close(input_fd), close(pipe_fds[0]), close(pipe_fds[1]));
+	if (exec_command(argv[2], input_fd, pipe_fds[1], envp) == 127)
+	{
+		ft_putstr_fd(argv[2], 2);
+		ft_putstr_fd(": command not found\n", 2);
+	}
 	close(pipe_fds[1]);
 	close(input_fd);
 	output_fd = open(argv[4], O_WRONLY | O_TRUNC | O_CREAT, 0644);
 	if (output_fd == -1)
 		return (perror(argv[4]), close(pipe_fds[0]), 1);
-	if (exec_command(argv[3], pipe_fds[0], output_fd, envp) == 0)
-		return (ft_putstr_fd(argv[3], 2), ft_putstr_fd(": command not found\n", 2), close(output_fd), close(pipe_fds[0]));
-	return (close(pipe_fds[0]), close(output_fd), 0);
+	result = exec_command(argv[3], pipe_fds[0], output_fd, envp);
+	if (result == 127)
+		return (ft_putstr_fd(argv[3], 2), ft_putstr_fd(": command not found\n", 2), close(pipe_fds[0]), close(output_fd), 127);
+	return (close(pipe_fds[0]), close(output_fd), result);
 }
