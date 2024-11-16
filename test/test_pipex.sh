@@ -13,7 +13,6 @@ ANOTHER_NO_WRITE_FILE="another_no_write_file.txt"
 LOG="test_results.log"
 TEMP_SANITIZER_LOG="sanitizer_results.log"
 INPUT_BAK=$INPUT
-OUTPUT_BAK=$OUTPUT
 
 touch $NO_READ_FILE && chmod -r $NO_READ_FILE
 touch $NO_WRITE_FILE && chmod -w $NO_WRITE_FILE
@@ -149,4 +148,4 @@ echo -e "\n======================== Résultats des tests =======================
 cat $LOG
 
 # Nettoyage
-rm -f $INPUT $EXPECTED $OUTPUT
+rm -f $INPUT $EXPECTED $OUTPUT $NO_READ_FILE $NO_WRITE_FILE
