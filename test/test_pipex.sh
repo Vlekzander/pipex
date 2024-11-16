@@ -10,6 +10,8 @@ OUTPUT="output.txt"
 NO_READ_FILE="no_read_file.txt"
 NO_WRITE_FILE="no_write_file.txt"
 ANOTHER_NO_WRITE_FILE="another_no_write_file.txt"
+EMPTY_FILE="empty.txt"
+SPECIAL_CHARS_FILE="inputfile@#.txt"
 LOG="test_results.log"
 TEMP_SANITIZER_LOG="sanitizer_results.log"
 INPUT_BAK=$INPUT
@@ -17,6 +19,8 @@ INPUT_BAK=$INPUT
 touch $NO_READ_FILE && chmod -r $NO_READ_FILE
 touch $NO_WRITE_FILE && chmod -w $NO_WRITE_FILE
 touch $ANOTHER_NO_WRITE_FILE && chmod -w $ANOTHER_NO_WRITE_FILE
+touch $EMPTY_FILE
+touch $SPECIAL_CHARS_FILE
 # Efface les résultats précédents
 echo "Résultats des tests pour Pipex" > $LOG
 
@@ -134,6 +138,11 @@ yes "Line of text" | head -n 1000 > $INPUT
 run_test "cat" "wc -l" "cat input.txt | wc -l"  # Compter les lignes d'un fichier avec 1000 lignes
 
 # Tests sur des cas critiques de fichiers
+run_test "sleep 2" "echo 'Done'" "command with delay"
+INPUT=$EMPTY_FILE
+run_test "cat" "wc -l" "empty input file"
+INPUT=$SPECIAL_CHARS_FILE
+run_test "cat" "wc -l" "Filename with special chars"
 INPUT=$NO_READ_FILE
 run_test "cat" "wc -l" "no read perm on the input file"
 INPUT="unknown.txt"
@@ -148,4 +157,4 @@ echo -e "\n======================== Résultats des tests =======================
 cat $LOG
 
 # Nettoyage
-rm -f $INPUT $EXPECTED $OUTPUT $NO_READ_FILE $NO_WRITE_FILE
+rm -f $INPUT $EXPECTED $OUTPUT $NO_READ_FILE $NO_WRITE_FILE $EMPTY_FILE $SPECIAL_CHARS_FILE
