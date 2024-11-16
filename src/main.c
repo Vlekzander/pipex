@@ -6,7 +6,7 @@
 /*   By: apierret <apierret@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 17:04:23 by apierret          #+#    #+#             */
-/*   Updated: 2024/11/16 16:06:24 by apierret         ###   ########.fr       */
+/*   Updated: 2024/11/16 18:35:25 by apierret         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,7 @@ static int	exec_command(char *cmd, int input, int output, char **envp)
 	args = ft_split_args(cmd);
 	fcmd = locate_command(args[0], envp);
 	if (fcmd == NULL)
-		return (127);
+		return (free_ddarray(args), 127);
 	pid = fork();
 	if (pid == -1)
 		return (perror("fork"), 1);
@@ -72,6 +72,12 @@ static int	exec_command(char *cmd, int input, int output, char **envp)
 	free(fcmd);
 	free_ddarray(args);
 	return (status);
+}
+
+static void	ft_cmd_not_found(char *cmd)
+{
+	ft_putstr_fd(cmd, 2);
+	ft_putstr_fd(": command not found\n", 2);
 }
 
 int	main(int argc, char **argv, char **envp)
@@ -91,10 +97,7 @@ int	main(int argc, char **argv, char **envp)
 	if (pipe(pipe_fds) == -1)
 		return (perror("pipex"), close(input_fd), 1);
 	if (exec_command(argv[2], input_fd, pipe_fds[1], envp) == 127)
-	{
-		ft_putstr_fd(argv[2], 2);
-		ft_putstr_fd(": command not found\n", 2);
-	}
+		ft_cmd_not_found(argv[2]);
 	close(pipe_fds[1]);
 	close(input_fd);
 	output_fd = open(argv[4], O_WRONLY | O_TRUNC | O_CREAT, 0644);
@@ -102,6 +105,6 @@ int	main(int argc, char **argv, char **envp)
 		return (perror(argv[4]), close(pipe_fds[0]), 1);
 	result = exec_command(argv[3], pipe_fds[0], output_fd, envp);
 	if (result == 127)
-		return (ft_putstr_fd(argv[3], 2), ft_putstr_fd(": command not found\n", 2), close(pipe_fds[0]), close(output_fd), 127);
+		ft_cmd_not_found(argv[3]);
 	return (close(pipe_fds[0]), close(output_fd), result);
 }

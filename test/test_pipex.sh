@@ -8,6 +8,7 @@ INPUT="input.txt"
 EXPECTED="expected_output.txt"
 OUTPUT="output.txt"
 LOG="test_results.log"
+TEMP_VALGRIND_LOG="valgrind_results.log"
 
 # Efface les résultats précédents
 echo "Résultats des tests pour Pipex" > $LOG
@@ -26,7 +27,7 @@ function run_test() {
     echo -e "\nRETURN VALUE: $?" >> $EXPECTED
 
     # Exécution de Pipex
-    $PIPEX $INPUT "$cmd1" "$cmd2" $OUTPUT
+    valgrind --leak-check=full --log-file=$TEMP_VALGRIND_LOG $PIPEX $INPUT "$cmd1" "$cmd2" $OUTPUT
     echo -e "\nRETURN VALUE: $?" >> $OUTPUT
 
     # Comparaison des résultats
@@ -41,9 +42,15 @@ function run_test() {
         cat $OUTPUT >> $LOG
         echo "--------------------------------------" >> $LOG
     fi
+    if grep -q "definitely lost: [1-9]" $TEMP_VALGRIND_LOG; then
+        echo "--------------------------------------" >> $LOG
+        echo "Test : $description - Fuites détectées" >> $LOG
+        cat $TEMP_VALGRIND_LOG >> $LOG
+        echo "--------------------------------------" >> $LOG
+    fi
 
     # Nettoyage des fichiers
-    rm -f $EXPECTED $OUTPUT
+    rm -f $EXPECTED $OUTPUT $TEMP_VALGRIND_LOG
 }
 
 # Tests de base
