@@ -8,7 +8,7 @@ INPUT="input.txt"
 EXPECTED="expected_output.txt"
 OUTPUT="output.txt"
 LOG="test_results.log"
-TEMP_VALGRIND_LOG="valgrind_results.log"
+TEMP_SANITIZER_LOG="sanitizer_results.log"
 
 # Efface les résultats précédents
 echo "Résultats des tests pour Pipex" > $LOG
@@ -26,14 +26,25 @@ function run_test() {
     bash -c "< $INPUT $cmd1 | $cmd2 > $EXPECTED"
     echo -e "\nRETURN VALUE: $?" >> $EXPECTED
 
-    # Exécution de Pipex
-    valgrind --leak-check=full --log-file=$TEMP_VALGRIND_LOG $PIPEX $INPUT "$cmd1" "$cmd2" $OUTPUT
+    # Exécution de Pipex avec fsanitize
+    # Lors de l'exécution, les erreurs de mémoire seront directement affichées
+    # Aucun fichier de log externe nécessaire, mais on peut capturer la sortie pour l'affichage
+    $PIPEX $INPUT "$cmd1" "$cmd2" $OUTPUT 2> $TEMP_SANITIZER_LOG
     echo -e "\nRETURN VALUE: $?" >> $OUTPUT
 
     # Comparaison des résultats
     if diff -q $EXPECTED $OUTPUT > /dev/null 2>&1; then
-        echo "✔️  Test réussi : $description" >> $LOG
+        # Si les sorties sont identiques, vérifier les erreurs de mémoire
+        if grep -q "ERROR" $TEMP_SANITIZER_LOG; then
+            echo "--------------------------------------" >> $LOG
+            echo "❌ Test échoué : $description - Fuites de mémoire détectées" >> $LOG
+            cat $TEMP_SANITIZER_LOG >> $LOG
+            echo "--------------------------------------" >> $LOG
+        else
+            echo "✔️  Test réussi : $description" >> $LOG
+        fi
     else
+        # Si les sorties ne correspondent pas, échec immédiat du test
         echo "--------------------------------------" >> $LOG
         echo "❌ Test échoué : $description" >> $LOG
         echo "Résultat attendu :" >> $LOG
@@ -41,16 +52,19 @@ function run_test() {
         echo "Résultat obtenu :" >> $LOG
         cat $OUTPUT >> $LOG
         echo "--------------------------------------" >> $LOG
-    fi
-    if grep -q "definitely lost: [1-9]" $TEMP_VALGRIND_LOG; then
-        echo "--------------------------------------" >> $LOG
-        echo "Test : $description - Fuites détectées" >> $LOG
-        cat $TEMP_VALGRIND_LOG >> $LOG
-        echo "--------------------------------------" >> $LOG
+
+        # Vérification des erreurs de mémoire même si la sortie ne correspond pas
+        if grep -q "ERROR" $TEMP_SANITIZER_LOG; then
+            echo "--------------------------------------" >> $LOG
+            echo "❌ Test échoué : $description - Fuites de mémoire détectées" >> $LOG
+            cat $TEMP_SANITIZER_LOG >> $LOG
+            echo "--------------------------------------" >> $LOG
+        fi
     fi
 
+
     # Nettoyage des fichiers
-    rm -f $EXPECTED $OUTPUT $TEMP_VALGRIND_LOG
+    rm -f $EXPECTED $OUTPUT $TEMP_SANITIZER_LOG
 }
 
 # Tests de base
