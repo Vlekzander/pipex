@@ -6,7 +6,7 @@
 /*   By: apierret <apierret@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 17:04:23 by apierret          #+#    #+#             */
-/*   Updated: 2024/11/14 13:58:34 by apierret         ###   ########.fr       */
+/*   Updated: 2024/11/16 11:22:54 by apierret         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,21 +16,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include "libft.h"
-
-static void	free_strings(char **strs)
-{
-	size_t	i;
-
-	if (strs == NULL)
-		return ;
-	i = 0;
-	while (strs[i] != NULL)
-	{
-		free(strs[i]);
-		i++;
-	}
-	free(strs);
-}
+#include "utils.h"
 
 static char	*locate_command(char *cmd, char **envp)
 {
@@ -52,11 +38,11 @@ static char	*locate_command(char *cmd, char **envp)
 		fcmd = ft_strjoin(temp, cmd);
 		free(temp);
 		if (access(fcmd, X_OK) == 0)
-			return (free_strings(paths), fcmd);
+			return (free_ddarray(paths), fcmd);
 		free(fcmd);
 		i++;
 	}
-	return (free_strings(paths), NULL);
+	return (free_ddarray(paths), NULL);
 }
 
 static int	exec_command(char *cmd, int input, int output, char **envp)
@@ -82,7 +68,7 @@ static int	exec_command(char *cmd, int input, int output, char **envp)
 	else
 		waitpid(pid, &status, 0);
 	free(fcmd);
-	free_strings(args);
+	free_ddarray(args);
 	return (status == 0);
 }
 
