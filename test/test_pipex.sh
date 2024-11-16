@@ -23,11 +23,11 @@ function run_test() {
 
     # Commande de référence avec le shell
     bash -c "< $INPUT $cmd1 | $cmd2 > $EXPECTED"
-    echo "$?" >> $EXPECTED
+    echo -e "\nRETURN VALUE: $?" >> $EXPECTED
 
     # Exécution de Pipex
     $PIPEX $INPUT "$cmd1" "$cmd2" $OUTPUT
-    echo "$?" >> $OUTPUT
+    echo -e "\nRETURN VALUE: $?" >> $OUTPUT
 
     # Comparaison des résultats
     if diff -q $EXPECTED $OUTPUT > /dev/null 2>&1; then
