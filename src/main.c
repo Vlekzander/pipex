@@ -6,7 +6,7 @@
 /*   By: apierret <apierret@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 17:04:23 by apierret          #+#    #+#             */
-/*   Updated: 2024/11/16 18:35:25 by apierret         ###   ########.fr       */
+/*   Updated: 2024/11/16 22:18:09 by apierret         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,17 +87,17 @@ int	main(int argc, char **argv, char **envp)
 	int		output_fd;
 	int		result;
 
-	if (argc < 5)
-		return (ft_putstr_fd("[PIPEX] Not enough arguments.\n", 2), 1);
-	if (argc > 5)
-		return (ft_putstr_fd("[PIPEX] Too much arguments.\n", 2), 1);
+	if (argc != 5)
+		return (ft_putstr_fd("[USAGE] pipex <input> <cmd1> <cmd2> <output>\n",
+				2), 1);
 	input_fd = open(argv[1], O_RDONLY);
 	if (input_fd == -1)
-		return (perror(argv[1]), 1);
+		perror(argv[1]);
 	if (pipe(pipe_fds) == -1)
 		return (perror("pipex"), close(input_fd), 1);
-	if (exec_command(argv[2], input_fd, pipe_fds[1], envp) == 127)
-		ft_cmd_not_found(argv[2]);
+	if (input_fd != -1)
+		if (exec_command(argv[2], input_fd, pipe_fds[1], envp) == 127)
+			ft_cmd_not_found(argv[2]);
 	close(pipe_fds[1]);
 	close(input_fd);
 	output_fd = open(argv[4], O_WRONLY | O_TRUNC | O_CREAT, 0644);
