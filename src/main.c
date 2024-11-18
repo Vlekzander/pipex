@@ -6,7 +6,7 @@
 /*   By: apierret <apierret@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 17:04:23 by apierret          #+#    #+#             */
-/*   Updated: 2024/11/16 22:18:09 by apierret         ###   ########.fr       */
+/*   Updated: 2024/11/18 18:43:49 by apierret         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <signal.h>
 #include "libft.h"
 #include "utils.h"
 
@@ -46,65 +47,92 @@ static char	*locate_command(char *cmd, char **envp)
 	return (free_ddarray(paths), NULL);
 }
 
-static int	exec_command(char *cmd, int input, int output, char **envp)
+static int	exec_commands(int input, char *f_output, char **cmds, char **envp)
 {
 	pid_t	pid;
 	char	**args;
-	char	*fcmd;
+	char	*cmd;
+	int		fds[2];
 	int		status;
 
-	args = ft_split_args(cmd);
-	fcmd = locate_command(args[0], envp);
-	if (fcmd == NULL)
-		return (free_ddarray(args), 127);
-	pid = fork();
-	if (pid == -1)
-		return (perror("fork"), 1);
-	if (pid == 0)
+	if (f_output == NULL || cmds == NULL || envp == NULL)
+		return (1);
+	args = NULL;
+	cmd = NULL;
+	pid = 0;
+	while (*cmds != NULL)
 	{
-		dup2(input, STDIN_FILENO);
-		dup2(output, STDOUT_FILENO);
-		execve(fcmd, args, envp);
+		args = ft_split_args(*cmds);
+		if (args == NULL)
+			return (1);
+		cmd = locate_command(args[0], envp);
+		if (cmd == NULL)
+		{
+			ft_putstr_fd(*cmds, 2);
+			ft_putstr_fd(": command not found\n", 2);
+		}
+		if (*(cmds + 1) == NULL)
+		{
+			if (cmd == NULL)
+				return (perror(f_output), free_ddarray(args), free(cmd), close(fds[0]), close(fds[1]), close(input), 127);
+			close(fds[1]);
+			fds[1] = open(f_output, O_WRONLY | O_TRUNC | O_CREAT, 0644);
+			if (fds[1] == -1)
+				return (perror(f_output), free_ddarray(args), free(cmd), close(fds[0]), close(fds[1]), close(input), 1);
+		}
+		else
+		{
+			if (pipe(fds) == -1)
+				return (perror("pipes"), free_ddarray(args), free(cmd), close(input), 1);
+		}
+		pid = fork();
+		if (pid == -1)
+			return (perror("fork"), free_ddarray(args), free(cmd), close(fds[0]), close(fds[1]), close(input), 1);
+		if (pid == 0)
+		{
+			dup2(input, STDIN_FILENO);
+			dup2(fds[1], STDOUT_FILENO);
+			close(input);
+			close(fds[0]);
+			close(fds[1]);
+			execve(cmd, args, envp);
+			exit(EXIT_FAILURE);
+		}
+		close(input);
+		close(fds[1]);
+		input = fds[0];
+		free_ddarray(args);
+		free(cmd);
+		cmds++;
 	}
 	waitpid(pid, &status, 0);
 	if (WIFEXITED(status))
 		status = WEXITSTATUS(status);
-	free(fcmd);
-	free_ddarray(args);
+	close(fds[0]);
+	close(fds[1]);
+	close(input);
 	return (status);
-}
-
-static void	ft_cmd_not_found(char *cmd)
-{
-	ft_putstr_fd(cmd, 2);
-	ft_putstr_fd(": command not found\n", 2);
 }
 
 int	main(int argc, char **argv, char **envp)
 {
-	int		pipe_fds[2];
-	int		input_fd;
-	int		output_fd;
-	int		result;
+	int		input;
+	char	*output;
+	int		fds[2];
 
 	if (argc != 5)
 		return (ft_putstr_fd("[USAGE] pipex <input> <cmd1> <cmd2> <output>\n",
 				2), 1);
-	input_fd = open(argv[1], O_RDONLY);
-	if (input_fd == -1)
+	input = open(argv[1], O_RDONLY);
+	if (input == -1)
+	{
 		perror(argv[1]);
-	if (pipe(pipe_fds) == -1)
-		return (perror("pipex"), close(input_fd), 1);
-	if (input_fd != -1)
-		if (exec_command(argv[2], input_fd, pipe_fds[1], envp) == 127)
-			ft_cmd_not_found(argv[2]);
-	close(pipe_fds[1]);
-	close(input_fd);
-	output_fd = open(argv[4], O_WRONLY | O_TRUNC | O_CREAT, 0644);
-	if (output_fd == -1)
-		return (perror(argv[4]), close(pipe_fds[0]), 1);
-	result = exec_command(argv[3], pipe_fds[0], output_fd, envp);
-	if (result == 127)
-		ft_cmd_not_found(argv[3]);
-	return (close(pipe_fds[0]), close(output_fd), result);
+		if (pipe(fds) == -1)
+			return (perror("pipes"), 1);
+		close(fds[1]);
+		input = fds[0];
+	}
+	output = argv[argc -1];
+	argv[argc -1] = NULL;
+	return (exec_commands(input, output, argv +2, envp));
 }
