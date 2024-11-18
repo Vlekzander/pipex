@@ -6,7 +6,7 @@
 /*   By: apierret <apierret@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 17:04:23 by apierret          #+#    #+#             */
-/*   Updated: 2024/11/18 18:43:49 by apierret         ###   ########.fr       */
+/*   Updated: 2024/11/18 18:55:57 by apierret         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,8 @@ static char	*locate_command(char *cmd, char **envp)
 	char	**paths;
 	size_t	i;
 
+	if (access(cmd, X_OK) == 0)
+		return (ft_strdup(cmd));
 	i = 0;
 	while (envp[i] != NULL && ft_strncmp("PATH=", envp[i], 5) != 0)
 		i++;
@@ -73,12 +75,12 @@ static int	exec_commands(int input, char *f_output, char **cmds, char **envp)
 		}
 		if (*(cmds + 1) == NULL)
 		{
-			if (cmd == NULL)
-				return (perror(f_output), free_ddarray(args), free(cmd), close(fds[0]), close(fds[1]), close(input), 127);
 			close(fds[1]);
 			fds[1] = open(f_output, O_WRONLY | O_TRUNC | O_CREAT, 0644);
 			if (fds[1] == -1)
 				return (perror(f_output), free_ddarray(args), free(cmd), close(fds[0]), close(fds[1]), close(input), 1);
+			if (cmd == NULL)
+				return (free_ddarray(args), free(cmd), close(fds[0]), close(fds[1]), close(input), 127);
 		}
 		else
 		{
