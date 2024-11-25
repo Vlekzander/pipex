@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-Wall -Wextra -Werror -Iinclude -I$(LIBFT_DIR)/include
 LDFLAGS=-L$(LIBFT_DIR)
 LIBS=-lft
-SOURCES=src/main.c src/utils.c
+SOURCES=src/main.c
 OBJECTS=$(SOURCES:.c=.o)
 NAME=pipex
 
