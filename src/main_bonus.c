@@ -6,7 +6,7 @@
 /*   By: apierret <apierret@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/27 22:23:11 by apierret          #+#    #+#             */
-/*   Updated: 2024/11/27 22:27:19 by apierret         ###   ########.fr       */
+/*   Updated: 2024/11/27 22:36:22 by apierret         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,8 @@ int	main(int argc, char **argv, char **envp)
 	int				return_value;
 
 	if (argc < 4)
-		return (ft_putstr_fd("[USAGE] pipex <input> <cmd1> ... <cmdN> <output>\n", 2), 1);
+		return (ft_putstr_fd("[USAGE] pipex <input> <cmd1> .. <cmdN> <output>\n"
+				, 2), 1);
 	data.input = open_file(argv[1], 0);
 	data.output = open_file(argv[argc -1], 1);
 	argv[argc -1] = NULL;

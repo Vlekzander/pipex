@@ -6,14 +6,13 @@
 /*   By: apierret <apierret@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/27 17:59:56 by apierret          #+#    #+#             */
-/*   Updated: 2024/11/27 22:34:12 by apierret         ###   ########.fr       */
+/*   Updated: 2024/11/27 22:36:38 by apierret         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <stdlib.h>
 #include <unistd.h>
 #include "pipex.h"
-
 
 void	close_fd(int fd)
 {
