@@ -6,14 +6,14 @@
 /*   By: apierret <apierret@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/27 15:06:47 by apierret          #+#    #+#             */
-/*   Updated: 2024/11/27 19:20:21 by apierret         ###   ########.fr       */
+/*   Updated: 2024/11/27 22:34:38 by apierret         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "pipex.h"
 #include <stdlib.h>
-#include <sys/wait.h>
 #include <unistd.h>
+#include <sys/wait.h>
+#include "pipex.h"
 
 static int	get_return_value(pid_t pid, t_error_code error)
 {
